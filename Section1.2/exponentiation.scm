@@ -1,0 +1,26 @@
+(define (expt b n)
+    (if (= 0 n) 1 (expt b (- n 1)))
+)
+
+(define (expt b n)
+    (define (iter current counter)
+        (if (< n counter) current (iter (* b current) (+ counter 1)))
+    )
+    (iter 1 1)
+)
+
+(define (square n)
+    (* n n)
+)
+
+(define (even? n)
+    (= (remainder n 2) 0)
+)
+
+(define (fast-expt b n)
+    (cond ((= 0 n) 1)
+          ((even? n) (square (fast-expt b (/ n 2))))
+          (else (* b (fast-expt b (- n 1))))
+    )
+    ; (if (even? n) (square (fast-expt b (/ n 2))) (* b (fast-expt b (- n 1))))
+)
