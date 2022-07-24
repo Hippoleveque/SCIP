@@ -1,0 +1,81 @@
+(define (memq item x)
+    (cond ((null? x) #f)
+          ((eq? (car x) item) x)
+          (else (memq item (cdr x)))
+    )
+)
+
+(define (deriv expr var)
+    (cond ((variable? expr)
+           (if (same-variable? expr var) 1 0)
+          )
+          ((sum? expr)
+           (make-sum (deriv (addend expr) var) (deriv (augend expr) var)))
+          ((product? expr)
+           (make-sum (make-product (multiplier expr) (deriv (multiplicand expr) var))
+                     (make-product (multiplicand expr) (deriv (multiplier expr) var)))
+          )
+          ((number? expr) 0)
+          (else (error "Unknown expression type -- DERIV" exp))
+    )
+)
+
+(define (variable? e)
+    (symbol? e)
+)
+
+(define (same-variable? v1 v2)
+    (and (variable? v1) (variable? v2) (eq? v1 v2))
+)
+
+(define (make-sum a1 a2)
+    (list '+ a1 a2)
+)
+
+(define (sum? e)
+    (and (pair? e) (eq? '+ (car e)))
+)
+
+(define (addend e)
+    (cadr e)
+)
+
+(define (augend e)
+    (caddr e)
+)
+
+(define (make-product m1 m2)
+    (list '* m1 m2)
+)
+
+(define (product? e)
+    (and (pair? e) (eq? '* (car e)))
+)
+
+(define (multiplier e)
+    (cadr e)
+)
+
+(define (multiplicand e)
+    (caddr e)
+)
+
+
+(define (make-sum a1 a2)
+    (cond ((and (number? a1) (number? a2)) (+ a1 a2))
+          ((and (number? a1) (= 0 a1)) a2)
+          ((and (number? a2) (= 0 a2)) a1)
+          (else (list '+ a1 a2))
+    )  
+)
+
+(define (make-product m1 m2)
+    (cond ((and (number? m1) (number? m2)) (* m1 m2))
+          ((and (number? m1) (= 0 m1)) 0)
+          ((and (number? m1) (= 1 m1)) m2)
+          ((and (number? m2) (= 0 m2)) 0)
+          ((and (number? m2) (= 1 m2)) m1)
+          (else (list '* m1 m2))
+    )
+)
+
