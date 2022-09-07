@@ -35,7 +35,7 @@
 (define (mapper proc alist)
     (if (null? alist)
         alist
-        (cons (proc (car alist)) (map proc (cdr alist)))
+        (cons (proc (car alist)) (mapper proc (cdr alist)))
     )
 )
 
