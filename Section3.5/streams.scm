@@ -194,6 +194,103 @@
     )
 )
 
-(define (accelerated-sqeuence transform s)
+(define (accelerated-sequence transform s)
     (stream-map stream-car (make-tableau transform s))
+)
+
+(define (interleave s1 s2)
+    (if (stream-null? s1)
+        s2
+        (cons-stream (stream-car s1)
+                     (interleave s2 (stream-cdr s1))
+        )
+    )
+)
+
+(define (pairs s t)
+    (cons-stream 
+        (list (stream-car s) (stream-car t))
+        (interleave
+            (stream-map (lambda (x) (list (stream-car s) x)) (stream-cdr t))
+            (pairs (stream-cdr s) (stream-cdr t))
+        )
+    )
+)
+
+(define (integral integrand initial-value dt)
+    (define int 
+        (cons-stream
+            initial-value
+            (add-streams (scale-stream integrand dt)
+                          int
+            )
+        )
+    )
+    int
+)
+
+(define (solve f y0 dt)
+    (define y (integral dy y0 dt))
+    (define dy (stream-map f y))
+    y
+)
+
+#| Would not work  |#
+
+(define (integral delayed-integrand initial-value dt)
+    (define int
+        (cons-stream initial-value
+                     (let ((integrand (force delayed-integrand)))
+                        (add-streams (scale-stream integrand dt)
+                                      int
+                        )
+                      )
+        )
+    )
+)
+
+(define (solve f y0 dt)
+    (define y (integral (delay dy) y0 dt))
+    (define dy (stream-map f y))
+    y
+)
+
+(define random-numbers
+    (cons-stream
+        random-init
+        (stream-map rand-update random-numbers)
+    )
+)
+
+
+(define (map-successive-pairs f s)
+    (cons-stream
+        (f (stream-car s) (stream-car (stream-cdr s)))
+        (map-successive-pairs f (stream-cdr s))
+    )
+)
+
+(define cesaro-stream
+    (map-successive-pairs (lambda (r1 r2) (= (gcd r1 r2) 1))
+                          random-numbers
+    )
+)
+
+(define (monte-carlo experiment-stream passed failed)
+    (define (next passed failed)
+        (cons-stream
+            (/ passed (+ passed failed))
+            (monte-carlo (stream-cdr experiment-stream) passed failed)
+        )
+    )
+    (if (stream-car experiment-stream)
+        (next (+ passed 1) failed)
+        (next passed (+ failed 1))
+    )
+)
+
+(define pi-stream
+    (stream-map (lambda (p) (sqrt (/ 6 p)))
+                (monte-carlo cesaro-stream 0 0)
+    )
 )

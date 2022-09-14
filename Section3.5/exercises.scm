@@ -361,3 +361,419 @@ anyway
 (define log2-stream 
     (partial-sums (log2-summands 1))
 )
+
+#|  Exercice 3.66 |#
+
+#| 
+With the interleave procedure, one of two 
+pairs will be selected among the first stream,
+so it will take approx 200 pairs to generate 1, 100
+Recursively, about 400 pairs to get 2,100; 
+800 pairs to get 3, 100 and so on
+
+To reach 99, 100, we'll need ~ 100 * 2 ** 99
+To reach 100, 100, we'll need ~ 100 * 2 ** 100
+
+|#
+
+#|  Exercice 3.67 |#
+
+
+(define (interleave3 s1 s2 s3)
+    (cond ((stream-null? s1)
+            (interleave s2 s3)
+          )
+          ((stream-null? s2)
+           s3
+          )
+          (else (cons-stream
+                    (stream-car s1)
+                    (interleave3 s2 s3 (stream-cdr s1))
+            ))
+    )
+)
+
+(define (all-pairs s t)
+    (cons-stream
+        (list (stream-car s) (stream-car t))
+        (interleave3
+            (stream-map (lambda (x) (list (stream-car s) x)) (stream-cdr t))
+            (stream-map (lambda (x) (list x (stream-car s))) (stream-cdr t))
+            (all-pairs (stream-cdr s) (stream-cdr s))
+        )
+    )
+)
+
+#|  Exercice 3.68 |#
+
+(define (pairs s t)
+    (interleave 
+        (stream-map (lambda (x) (stream-car s) x) (stream-cdr t))
+        (pairs (stream-cdr s) (stream-cdr t))
+    )
+)
+
+#| 
+As we use application order evaluation,
+The interpreter will recursively evaluate (pairs (stream-cdr s) (stream-cdr t))
+in an infinite loop
+|#
+
+#|  Exercice 3.69 |#
+
+(define (triplets s t u)
+    (cons-stream 
+        (list (stream-car s) (stream-car t) (stream-car u))
+        (interleave
+            (stream-cdr (stream-map (lambda (x) (cons (stream-car s) x)) (pairs t u)))
+            (triplets (stream-cdr s) (stream-cdr t) (stream-cdr u))
+        )
+    )
+)
+
+(define triples 
+    (triplets integers integers integers)
+)
+
+(define pyth-triples
+    (stream-filter 
+        (lambda (x) (= (square (caddr x)) (+ (square (car x)) (square (cadr x)))))
+        triples
+    )
+)
+
+#|  Exercice 3.70 |#
+
+(define (merge-weighted s1 s2 weight)
+    (cond ((stream-null? s1) s2)
+        ((stream-null? s2) s1)
+        (else 
+            (let ((s1car (stream-car s1))
+                (s2car (stream-car s2))
+                )
+                (let ((w1 (weight s1car))
+                      (w2 (weight s2car))
+                      )
+                    (cond ((< w1 w2)
+                        (cons-stream s1car (merge-weighted (stream-cdr s1) s2 weight))
+                        )
+                        ((> w1 w2) 
+                        (cons-stream s2car (merge-weighted s1 (stream-cdr s2) weight))
+                        )
+                        (else 
+                            (cons-stream s1car (merge-weighted (stream-cdr s1) 
+                                                    s2 weight)
+                            )
+                        )
+                    )
+                )
+            )
+        )
+    )
+)
+
+
+(define (weighted-pairs s t weight)
+    (cons-stream 
+        (list (stream-car s) (stream-car t))
+        (merge-weighted
+            (stream-map (lambda (x) (list (stream-car s) x)) (stream-cdr t))
+            (weighted-pairs (stream-cdr s) (stream-cdr t) weight)
+            weight
+        )
+    )
+)
+
+#| a. |#
+
+(define weighted-int-pairs
+    (weighted-pairs integers integers (lambda (x) (+ (car x) (cadr x))))
+)
+
+#| b. |#
+
+(define (not-divisible x num)
+    (not (divisible? x num))
+)
+
+(define the-sum
+    (let ((not-divisible-sum
+          (stream-filter 
+            (lambda (x)
+                (and (not-divisible x 2)
+                     (not-divisible x 3)
+                     (not-divisible x 5)
+                )
+            )
+            integers
+          )
+        ))
+        (weighted-pairs not-divisible-sum
+                        not-divisible-sum
+                        (lambda (x)
+                            (+ (* 2 (car x))
+                               (* 3 (cadr x))
+                               (* 5 (car x) (cadr x))
+                            )
+                        )
+        )
+    )
+)
+
+#|  Exercice 3.71 |#
+
+(define cube-sum-weighted-integers-pairs
+        (weighted-pairs
+            integers
+            integers
+            (lambda (x) (+ (cube (car x)) (cube (cadr x))))
+        )
+)
+
+(define (find-duplicate-weight s weight)
+    (define (iter curr-s last-weight)
+        (let ((curr-weight (weight (stream-car curr-s))))
+            (if (= curr-weight last-weight)
+                (cons-stream curr-weight
+                            (iter (stream-cdr curr-s) 0)
+                )
+                (iter (stream-cdr curr-s) (weight (stream-car curr-s)))
+            )
+        )
+
+    )
+    (iter s 0)
+)
+
+(define ramanujan-nums
+    (find-duplicate-weight cube-sum-weighted-integers-pairs
+                           (lambda (x) (+ (cube (car x)) (cube (cadr x))))
+    )
+)
+
+#|  Exercice 3.72 |#
+
+(define square-sum-weighted-integers-pairs
+    (weighted-pairs
+        integers
+        integers
+        (lambda (x) (+ (square (car x)) (square (cadr x))))
+    )
+)
+
+(define (find-triplicate-weight s weight)
+    (define (iter curr-s)
+        (let ((curr-weight (weight (stream-car curr-s)))
+              (next-weight (weight (stream-ref curr-s 1)))
+             )
+             (if (= curr-weight next-weight)
+                (let ((next-2-weight (weight (stream-ref curr-s 2))))
+                     (if (= curr-weight next-2-weight)
+                         (cons-stream
+                            (cons (stream-car curr-s) curr-weight)
+                            (cons-stream
+                                (cons (stream-ref curr-s 1) curr-weight)
+                                (cons-stream
+                                    (cons (stream-ref curr-s 2) curr-weight)
+                                    (iter (stream-cdr (stream-cdr (stream-cdr curr-s))))
+                                )
+                            )
+                         )
+                     )
+                     (iter (stream-cdr (stream-cdr curr-s)))
+                )
+                (iter (stream-cdr curr-s))
+             )
+        )
+    )
+    (iter s)
+)
+
+(define desired-sum
+       (find-triplicate-weight square-sum-weighted-integers-pairs
+                              (lambda (x) (+ (square (car x)) (square (cadr x))))
+       ) 
+)
+
+#| !!! Not good, skipping |#
+
+#|  Exercice 3.73 |#
+
+(define (RC R C dt)
+    (define (proc si v0)
+        (add-streams
+            (integral (scale-stream si (/ 1 C)) v0 dt)
+            (scale-stream si R)
+        )
+    )
+    proc
+)
+
+#|  Exercice 3.74 |#
+
+(define zero-crossings
+    (stream-map sign-change-detector sense-data 
+                                     (cons-stream
+                                        0
+                                        (stream-cdr sense-data)
+                                     )
+    )
+)
+
+#|  Exercice 3.75 |#
+
+#| Louis' program |#
+
+(define (make-zero-crossings input-stream last-value)
+    (let ((avpt (/ (+ (stream-car input-stream) last-value) 2)))
+        (cons-stream (sign-change-detector avpt last-value)
+                     (make-zero-crossings (stream-cdr input-stream)
+                                          avpt
+                    )
+        )
+    )
+)
+
+#| Correction |#
+
+(define (make-zero-crossings input-stream last-value last-avpt)
+    (let ((avpt (/ (+ (stream-car input-stream) last-value) 2)))
+        (cons-stream (sign-change-detector avpt last-avpt)
+                    (make-zero-crossings (stream-cdr input-stream)
+                                        (stream-car input-stream)
+                                        avpt
+                    )
+        )
+    )
+)
+
+#|  Exercice 3.76 |#
+
+(define (smooth input-stream)
+    (define (iter s last-value)
+        (cons-stream (/ (+ (stream-car s) last-value) 2)
+                     (iter (stream-cdr s) (stream-car s))
+        )
+    )
+    (iter input-stream 0)
+)
+
+(define (smooth input-stream)
+    (stream-map (lambda (x y) (/ (+ x y) 2)) input-stream (stream-cdr input-stream))
+)
+
+(define zero-crossings
+    (let ((smoothed-data))
+        (stream-map sign-change-detector smoothed-data 
+            (cons-stream
+                0
+                (stream-cdr smoothed-data)
+            )
+        )
+    )
+)
+
+#|  Exercice 3.77 |#
+
+#| Original integral iterative style |#
+
+(define (integral integrand initial-value dt)
+    (cons-stream initial-value
+        (if (stream-null? integrand)
+            '()
+            (integral (stream-cdr integrand)
+                      (+ (* (stream-car integrand) dt) initial-value)
+                      dt
+            )
+        )
+    )
+)
+
+#| Modified integral iterative style |#
+
+(define (integral delayed-integrand initial-value dt)
+    (cons-stream initial-value
+        (let ((integrand (force delayed-integrand)))
+            (if (stream-null? integrand)
+                '()
+                (integral (stream-cdr integrand)
+                          (+ (* (stream-car integrand) dt) 
+                             initial-value)
+                          dt
+                )
+            )
+        )
+    )
+)   
+
+
+#|  Exercice 3.78 |#
+
+(define (solve-2nd a b y0 dy0 dt)
+    (define y (integral (delay dy) y0 dt))
+    (define dy (integral (delay ddy) dy0 dt))
+    (define ddy (add-streams (scale-stream y b)
+                             (scale-stream dy a)
+    ))
+    y
+) 
+
+#|  Exercice 3.79 |#
+
+(define (solve-2nd f y0 dy0 dt)
+    (define y (integral (delay dy) y0 dt))
+    (define dy (integral (delay ddy) dy0 dt))
+    (define ddy (stream-map f dy y))
+    y
+)
+
+#|  Exercice 3.80 |#
+
+(define (RLC R L C dt)
+    (define (proc vc0 il0)
+        (let ((vc (solve-2nd (lambda (dy y) (- (* R dy) (* (/ 1 (* L C)) y)))
+                            vc0
+                              (- (/ C il0))
+                  )
+               ))
+              (let ((il (scale-stream (integral (delay vc) vc0 dt) C)))
+                   (cons vc il)
+             )
+        )
+    )
+)
+
+#|  Exercice 3.81 |#
+
+(define (random-stream input-stream)
+    (define random-stream
+        (cons-stream
+            random-init
+            (stream-map (lambda (x input)
+                    (if (eq? (car (stream-car input)) "generate")
+                        (rand-update x)
+                        (cdr (stream-car input))
+                    )
+                )
+                random-stream 
+                input-stream
+            )
+        )
+    )
+    random-stream
+)
+
+
+#|  Exercice 3.82 |#
+
+(define (monte-carlo-stream-integral predicate x1 x2 y1 y2)
+    (define (exp-stream)
+        (cons-stream
+            (predicate (cons (random-in-range x1 x2) (random-in-range y1 y2)))
+            (exp-stream)
+        )
+    )
+    (define monte-carlo-stream
+        (scale-stream (monte-carlo exp-stream 0 0) (* (- x2 x1) (- y2 y1)))
+    )
+)
