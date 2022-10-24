@@ -779,3 +779,91 @@ that is cleaner
 |#
 
 #| Exercise 4.21 |#
+
+#| Similar procedure for computing fiboncacci numbers (naive) |#
+
+(lambda (n)
+    ((lambda (fib) (fib fib n))
+     (lambda (fibo n)
+             (if (< n 2)
+                 n
+                 (else (+ (fibo fibo (- n 1)) (fibo fibo (- n 2))))
+             )
+    )
+   )
+)
+
+#| Similar procedure for computing fibonacci numbers |#
+
+(lambda (n)
+    ((lambda (fib)
+        (if (< n 2)
+            n
+            (fib fib 0 1 (- n 1))
+        )
+     )
+     (lambda (fibo a b count)
+        (if (= 0 count)
+            b
+            (fibo fibo b (+ a b) (- count 1))
+        )
+     )
+    )
+)
+
+#| b. |#
+
+(define (f x)
+    ((lambda (even? odd?)
+        (even? even? odd? x)
+     )
+     (lambda (ev? od? n)
+        (if (= n 0) 
+            #t
+            (od? ev? od? (- n 1))
+        )
+     )
+     (lambda (ev? od? n)
+        (if (= n 0)
+            #f
+            (ev? ev? od? (- n 1))
+        )
+     )
+    )
+)
+
+#| Exercise 4.22 |#
+
+(define (analyze-let exp)
+    (let ((vars (analyze (vars exp)))
+          (eprocs (map analyze (exprs exp)))
+          (bproc (analyze-sequence (body exp)))
+         )
+         (lambda (env) (execute-application
+                        (make-procedure vars bproc env)
+                        (map (lambda (eproc) (eproc env))
+                              eprocs
+                        )
+        ))      
+    )
+)
+
+#| or just add ((let? expr) (analyze (let->combination expr))) in analyze |#
+
+#| Exercise 4.23 |#
+
+#| 1 exprs |#
+
+#| 
+book => (analyze first-proc)
+Alyssa's => (lambda (env) (first-proc env))
+
+=> Extra function 
+|#
+
+#| See discussion here http://community.schemewiki.org/?sicp-ex-4.23 |#
+
+
+#| Exercice 4.24 |#
+
+#| Won't do |#
