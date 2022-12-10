@@ -199,7 +199,7 @@ of the procedure and it will be unable to
     (if (null? clauses) #t
         (let ((first (first-clause clauses))
               (rest (rest-clauses clauses))
-             )
+             )()
              (make-if first (expand-and-clauses rest)
                              #f
              )
