@@ -386,3 +386,14 @@ in the evaluation of (g 'x)
         (* (fact (- n 1)) n)
     )
 )
+
+#| b. |#
+
+#| 
+I think Alyssa misses the point because the main advantage 
+of compilation is to have the generation of the machine-like
+code as a pre-processing step (before starting the program)
+so that it is not generated at runtime. 
+
+
+|#
