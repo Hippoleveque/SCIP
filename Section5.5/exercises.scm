@@ -1384,3 +1384,44 @@ after-lambda94
 Would require further testing for the registers 
 saves and restores.
 |#
+
+#| Exercise 5.39 |#
+
+(define (lexical-address-lookup address rt-env)
+    (let ((frame-offset (car address))
+          (var-offset) (cdr address)
+         )
+         (if (> frame-offset 0)
+             (lexical-address-lookup (cons (- frame-offset 1) var-offset) (cdr rt-env))
+             (lookup-frame-variable-from-offset var-offset (frame-values (first-frame rt-env)))
+         )
+    )
+)
+
+(define (lookup-frame-variable-from-offset offset values)
+    (if (= offset 0)
+        (if (eq? (car values) '*unassigned)
+            (error "Variable is not assigned yet")
+            (car values)
+        )
+        (lookup-frame-variable-from-offset (- offset 1) (cdr values))
+    )
+)
+
+(define (lexical-address-set! address value rt-env)
+    (let ((frame-offset (car address))
+        (var-offset) (cdr address)
+        )
+        (if (> frame-offset 0)
+            (lexical-address-set! (cons (- frame-offset 1) var-offset) value (cdr rt-env))
+            (set-frame-variable-from-offset! var-offset value (frame-values (first-frame rt-env)))
+        )
+    )
+)
+
+(define (set-frame-variable-from-offset! offset value values)
+    (if (= offset 0)
+        (set-car! values value)
+        (set-frame-variable-from-offset! (- offset 1) (cdr values))
+    )
+)
