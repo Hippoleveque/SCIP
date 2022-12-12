@@ -9,7 +9,7 @@
            (compile-variable exp target linkage)
           )
           ((assignment? exp)
-           (compile-assignmnet exp target linkage)
+           (compile-assignment exp target linkage)
           )
           ((definition? exp)
            (compile-definition exp target linkage)
@@ -100,7 +100,7 @@
   )
 )
 
-(define (compile-assignmnet exp target linkage)
+(define (compile-assignment exp target linkage)
   (let ((var (assignment-variable exp))
         (get-value-code 
               (compile (assignment-value exp) 'val 'next)
