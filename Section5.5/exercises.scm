@@ -609,3 +609,293 @@ after-lambda21
 
 #| No a lot to say, check http://community.schemewiki.org/?sicp-ex-5.33 |#
 
+#| Exercise 5.34 |#
+
+(define (factorial n)
+    (define (iter product counter)
+        (if (> counter n)
+            product
+            (iter (* product counter) (+ counter 1))
+        )
+    )
+    (iter 1 1)
+)
+
+#| 
+((assign val (op make-compiled-procedure) (label entry43) (reg env)) 
+(goto (label after-lambda42)) 
+entry43 
+    (assign env (op compiled-procedure-env) (reg proc)) 
+    (assign env (op extend-environment) (const (n)) (reg argl) (reg env)) 
+    (assign val (op make-compiled-procedure) (label entry48) (reg env)) 
+    (goto (label after-lambda47)) 
+    
+entry48 
+    (assign env (op compiled-procedure-env) (reg proc)) 
+    (assign env (op extend-environment) (const (product counter)) (reg argl) (reg env)) 
+    (save continue) 
+    (save env) 
+    (assign proc (op lookup-variable-value) (const >) (reg env)) 
+    (assign val (op lookup-variable-value) (const n) (reg env)) 
+    (assign argl (op list) (reg val)) 
+    (assign val (op lookup-variable-value) (const counter) (reg env)) 
+    (assign argl (op cons) (reg val) (reg argl)) 
+    (test (op primitive-procedure?) (reg proc)) 
+    (branch (label primitive-branch63)) 
+    
+compiled-branch62 
+    (assign continue (label after-call61)) 
+    (assign val (op compiled-procedure-entry) (reg proc)) 
+    (goto (reg val)) 
+    
+primitive-branch63 
+    (assign val (op apply-primitive-procedure) (reg proc) (reg argl)) 
+    
+after-call61 
+    (restore env) 
+    (restore continue) 
+    (test (op false?) (reg val)) 
+    (branch (label false-branch50)) 
+    
+true-branch51 
+    (assign val (op lookup-variable-value) (const product) (reg env)) 
+    (goto (reg continue)) 
+    
+false-branch50 
+    (assign proc (op lookup-variable-value) (const iter) (reg env)) 
+    (save continue) 
+    (save proc) 
+    (save env) 
+    (assign proc (op lookup-variable-value) (const +) (reg env)) 
+    (assign val (const 1)) 
+    (assign argl (op list) (reg val)) 
+    (assign val (op lookup-variable-value) (const counter) (reg env)) 
+    (assign argl (op cons) (reg val) (reg argl)) 
+    (test (op primitive-procedure?) (reg proc)) 
+    (branch (label primitive-branch57)) 
+    
+compiled-branch56 
+    (assign continue (label after-call55)) 
+    (assign val (op compiled-procedure-entry) (reg proc)) 
+    (goto (reg val)) 
+    
+primitive-branch57 
+    (assign val (op apply-primitive-procedure) (reg proc) (reg argl)) 
+    
+after-call55 
+    (assign argl (op list) (reg val)) 
+    (restore env) 
+    (save argl) 
+    (assign proc (op lookup-variable-value) (const *) (reg env)) 
+    (assign val (op lookup-variable-value) (const counter) (reg env)) 
+    (assign argl (op list) (reg val)) 
+    (assign val (op lookup-variable-value) (const product) (reg env)) 
+    (assign argl (op cons) (reg val) (reg argl)) 
+    (test (op primitive-procedure?) (reg proc)) 
+    (branch (label primitive-branch54)) 
+    
+compiled-branch53 
+    (assign continue (label after-call52)) 
+    (assign val (op compiled-procedure-entry) (reg proc)) 
+    (goto (reg val)) 
+    
+primitive-branch54 
+    (assign val (op apply-primitive-procedure) (reg proc) (reg argl)) 
+    
+after-call52 
+    (restore argl) 
+    (assign argl (op cons) (reg val) (reg argl)) 
+    (restore proc) 
+    (restore continue) 
+    (test (op primitive-procedure?) (reg proc)) 
+    (branch (label primitive-branch60)) 
+    
+compiled-branch59 
+    (assign val (op compiled-procedure-entry) (reg proc)) 
+    (goto (reg val)) 
+    
+primitive-branch60 
+    (assign val (op apply-primitive-procedure) (reg proc) (reg argl)) 
+    (goto (reg continue)) 
+    
+after-call58 
+
+after-if49 
+
+after-lambda47 
+    (perform (op define-variable!) (const iter) (reg val) (reg env)) 
+    (assign val (const ok)) 
+    (assign proc (op lookup-variable-value) (const iter) (reg env)) 
+    (assign val (const 1)) 
+    (assign argl (op list) (reg val)) 
+    (assign val (const 1)) 
+    (assign argl (op cons) (reg val) (reg argl)) 
+    (test (op primitive-procedure?) (reg proc)) 
+    (branch (label primitive-branch46)) 
+    
+compiled-branch45 
+    (assign val (op compiled-procedure-entry) (reg proc)) 
+    (goto (reg val)) 
+
+primitive-branch46 
+    (assign val (op apply-primitive-procedure) (reg proc) (reg argl)) 
+    (goto (reg continue)) 
+    
+after-call44 
+
+after-lambda42 
+    (perform (op define-variable!) (const factorial) (reg val) (reg env)) 
+    (assign val (const ok)))
+
+
+|#
+
+#| 
+Won't spend too much time on this, goto 
+http://community.schemewiki.org/?sicp-ex-5.34 
+
+(Reflects previous explanation about tail recursivity)
+|#
+
+#| Exercise 5.35 |#
+
+#| 
+(assign val (op make-compiled-procedure) (label entry16) (reg env))
+(goto (label after-lambda-15))
+
+entry16
+    (assign env (op compiled-procedure-env) (reg proc))
+    (assign env (op extend-environment) (const (x)) (reg argl) (reg env))
+    (assign proc (op lookup-variable-value) (const +) (reg env))
+    (save continue)
+    (save proc)
+    (save env)
+    (assign proc (op lookup-variable-value) (const g) (reg env))
+    (save proc)
+    (assign proc (op lookup-variable-value) (const +) (reg env))
+    (assign val (const 2))
+    (assign argl (op list) (reg val))
+    (assign val (op lookup-variable-value) (const x) (reg env))
+    (assign argl (op cons) (reg val) (reg argl))
+    (test (op primitive-procedure?) (reg proc))
+    (branch (label primitive-branch-19))
+
+compiled-branch18
+    (assign continue (label after-call17))
+    (assign val (op compiled-procedure-entry) (reg proc))
+    (goto (reg val))
+
+primitive-branch19
+    (assign val (op apply-primitive-procedure) (reg proc) (reg argl))
+
+after-call17
+    (assign argl (op list) (reg val))
+    (restore proc)
+    (test (op-primitive-procedure?) (reg proc))
+    (branch (label primitive-branch22))
+
+compiled-branch21
+    (assign continue (label after-call20))
+    (assign val (op compiled-procedure-entry) (reg proc))
+    (goto (reg val))
+
+primitive-branch22
+    (assign val (op apply-primitive-procedure) (reg proc) (reg argl))
+
+after-call20
+    (assign argl (op list) (reg val))
+    (restore env)
+    (assign val (op lookup-variable-value) (const x) (reg env))
+    (assign argl (op cons) (reg val) (reg argl))
+    (restore proc)
+    (restore continue)
+    (test (op-primitive-procedure?) (reg proc))
+    (branch (label primitive-branch25))
+
+compiled-branch24
+    (assign val (op compiled-procedure-entry) (reg proc))
+    (goto (reg val))
+
+primitive-branch25
+    (assign val (op apply-primitive-procedure) (reg proc) (reg argl))
+    (goto (reg continue))
+
+after-call23
+
+after-lambda15
+    (perform (op define-variable!) (const f) (reg val) (reg env))
+    (assign val (const ok))
+
+|#
+
+(define (f x)
+    (+ x (g (+ x 2)))
+)
+
+#| Exercise 5.36 |#
+
+#| 
+The compiler produce a right-to-left evaluation
+of the operands. 
+This choice is being made in construct-arglist and code-to-get-rest-args
+
+|#
+
+(define (construct-arglist operand-codes)
+    (if (null? operand-codes)
+        (make-instruction-sequence 
+            '()
+            '(argl)
+            '((assign argl (const ())))
+        )
+        (let ((code-to-get-first-arg 
+                (append-instruction-sequences
+                (car operand-codes)
+                (make-instruction-sequence '(val) '(argl)
+                    '((assign argl (op list) (reg val)))
+                )
+                )
+            ))
+            (if (null? (cdr operand-codes))
+                code-to-get-first-arg
+                (preserving '(env)
+                            code-to-get-first-arg 
+                            (code-to-get-rest-args
+                                (cdr operand-codes)
+                            )
+                )
+            )
+        )
+    )
+)
+
+(define (code-to-get-rest-args operand-codes)
+    (let ((code-for-next-arg (preserving '(argl)
+                                (car operand-codes)
+                                (append-instruction-sequences
+                                    (make-instruction-sequence
+                                        '(val)
+                                        '(val)
+                                        '((assign val (op list) (reg val)))
+                                    )
+                                    (make-instruction-sequence '(val argl)
+                                        '(argl)
+                                        '((assign argl
+                                            (op append)
+                                            (reg argl)
+                                            (reg val)
+                                        ))
+                                    )
+                                )
+
+                            ))
+        )
+        (if (null? (cdr operand-codes))
+            code-for-next-arg
+            (preserving '(env)
+                        code-for-next-arg
+                        (code-to-get-rest-args (cdr operands-codes))
+            )
+        )
+    )
+)

@@ -209,7 +209,7 @@
       (preserving 
           '(env continue)
           (compile (first-exp seq) target 'next)
-          (compile-sequence (rest-exps seq) target-linkage)
+          (compile-sequence (rest-exps seq) target linkage)
       )
   )
 )
@@ -343,7 +343,7 @@
            code-for-next-arg
            (preserving '(env)
                        code-for-next-arg
-                       (code-toget-rest-args (cdr operands-codes))
+                       (code-to-get-rest-args (cdr operands-codes))
            )
        )
   )
