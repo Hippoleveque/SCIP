@@ -501,3 +501,111 @@ after-lambda4
     (assign val (const ok)))
 
 |#
+
+(define (factorial n)
+    (if (= n 1)
+        1
+    (* n (factorial (- n 1)))))
+
+
+#| 
+
+
+((assign val (op make-compiled-procedure) (label entry22) (reg env)) 
+(goto (label after-lambda21)) 
+entry22 
+    (assign env (op compiled-procedure-env) (reg proc)) 
+    (assign env (op extend-environment) (const (n)) (reg argl) (reg env)) 
+    (save continue) 
+    (save env) 
+    (assign proc (op lookup-variable-value) (const =) (reg env)) 
+    (assign val (const 1)) (assign argl (op list) (reg val)) 
+    (assign val (op lookup-variable-value) (const n) (reg env)) 
+    (assign argl (op cons) (reg val) (reg argl)) 
+    (test (op primitive-procedure?) (reg proc)) 
+    (branch (label primitive-branch37)) 
+
+compiled-branch36 
+    (assign continue (label after-call35)) 
+    (assign val (op compiled-procedure-entry) (reg proc)) 
+    (goto (reg val)) 
+
+primitive-branch37 
+    (assign val (op apply-primitive-procedure) (reg proc) (reg argl)) 
+    
+after-call35 
+    (restore env) 
+    (restore continue) 
+    (test (op false?) (reg val)) 
+    (branch (label false-branch24)) 
+
+true-branch25 
+    (assign val (const 1)) 
+    (goto (reg continue)) 
+
+false-branch24 
+    (assign proc (op lookup-variable-value) (const *) (reg env)) 
+    (save continue) 
+    (save proc) 
+    (save env) 
+    (assign proc (op lookup-variable-value) (const factorial-alt) (reg env)) 
+    (save proc) 
+    (assign proc (op lookup-variable-value) (const -) (reg env)) 
+    (assign val (const 1)) 
+    (assign argl (op list) (reg val)) 
+    (assign val (op lookup-variable-value) (const n) (reg env)) 
+    (assign argl (op cons) (reg val) (reg argl)) 
+    (test (op primitive-procedure?) (reg proc)) 
+    (branch (label primitive-branch28)) 
+
+compiled-branch27 
+    (assign continue (label after-call26)) 
+    (assign val (op compiled-procedure-entry) (reg proc)) 
+    (goto (reg val)) 
+    
+primitive-branch28 
+    (assign val (op apply-primitive-procedure) (reg proc) (reg argl)) 
+
+after-call26 
+    (assign argl (op list) (reg val)) 
+    (restore proc) 
+    (test (op primitive-procedure?) (reg proc)) 
+    (branch (label primitive-branch31)) 
+    
+compiled-branch30 
+    (assign continue (label after-call29)) 
+    (assign val (op compiled-procedure-entry) (reg proc)) 
+    (goto (reg val)) 
+    
+primitive-branch31 
+    (assign val (op apply-primitive-procedure) (reg proc) (reg argl)) 
+    
+after-call29 
+    (assign argl (op list) (reg val)) 
+    (restore env) 
+    (assign val (op lookup-variable-value) (const n) (reg env)) 
+    (assign argl (op cons) (reg val) (reg argl)) 
+    (restore proc) 
+    (restore continue) 
+    (test (op primitive-procedure?) (reg proc)) 
+    (branch (label primitive-branch34)) 
+    
+compiled-branch33 
+    (assign val (op compiled-procedure-entry) (reg proc)) 
+    (goto (reg val)) 
+    
+primitive-branch34 
+    (assign val (op apply-primitive-procedure) (reg proc) (reg argl)) 
+    (goto (reg continue)) 
+    
+after-call32 
+
+after-if23 
+
+after-lambda21 
+    (perform (op define-variable!) (const factorial-alt) (reg val) (reg env)) 
+    (assign alt (const ok))))
+|#
+
+#| No a lot to say, check http://community.schemewiki.org/?sicp-ex-5.33 |#
+
