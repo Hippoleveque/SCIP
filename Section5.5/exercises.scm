@@ -1442,7 +1442,7 @@ saves and restores.
         (compile-assignment exp target linkage ct-env)
         )
         ((definition? exp)
-        (compile-definition exp target linkage)
+        (compile-definition exp target linkage ct-env)
         )
         ((if? exp)
         (compile-if exp target linkage ct-env)
@@ -1724,6 +1724,37 @@ saves and restores.
     )
 )
 
+
+(define (compile-lambda exp target linkage ct-env)
+    (let ((proc-entry (make-label 'entry))
+        (after-lambda (make-label 'after-lambda))
+        )
+        (let ((lambda-linkage (if (eq? linkage 'next) after-lambda linkage))
+            (parameters (lambda-parameters exp))
+            (old-ct-env (if (null? ct-env) '() (cons (car ct-env) (cdr ct-env))))
+            )
+            (set-car! ct-env parameters)
+            (set-cdr! ct-env old-ct-env)
+            (append-instruction-sequences
+                (tack-on-instruction-sequence
+                (end-with-linkage lambda-linkage
+                    (make-instruction-sequence '(env) (list target)
+                    `((assign ,target 
+                                (op make-compiled-procedure)
+                                (label ,proc-entry)
+                                (reg env)
+                        )
+                    )
+                    )
+                )
+                (compile-lambda-body exp proc-entry ct-env)
+                )
+                after-lambda
+            )
+        )
+    ) 
+)
+
 (define (compile-lambda exp target linkage ct-env)
     (let ((proc-entry (make-label 'entry))
         (after-lambda (make-label 'after-lambda))
@@ -1773,3 +1804,177 @@ Expr to compile
     )
 ) 3 4 )
 
+#| Exercice 5.43 |#
+
+(define (scan-out-defines proc-body)
+    (let ((internal-def-names '())
+        (internal-def-values '())
+        (other-body-exprs '())
+        )
+        (define (loop-body body-exprs)
+            (if (null? body-exprs)
+                'done
+                (begin (if (definition? (car body-exprs))
+                        (begin 
+                            (set! internal-def-names (cons (definition-variable (car body-exprs))
+                                                        internal-def-names 
+                                                    )
+                            )
+                            (set! internal-def-values (cons (definition-value (car body-exprs))
+                                                            internal-def-values                           
+                                                    )
+                            )
+                        )
+                        (set! other-body-exprs (append other-body-exprs (list (car body-exprs))))
+                )
+                (loop-body (cdr body-exprs)))
+            )
+        )
+        (loop-body proc-body)
+        (make-let (map (lambda (x) (list x '*unassigned)) internal-def-names)
+                (append (map (lambda (x y) (list 'set! x y)) internal-def-names internal-def-values) 
+                        other-body-exprs
+                )
+        )
+    )      
+)
+
+(define (make-let args body)
+    (cons 'let 
+        (cons
+            args
+            body
+        )  
+    )
+)
+
+(define (compile exp target linkage ct-env)
+    (cond ((self-evaluating? exp)
+        (compile-self-evaluating exp target linkage)
+        )
+        ((quoted? exp)
+        (compile-quoted exp target linkage)
+        )
+        ((variable? exp)
+        (compile-variable exp target linkage ct-env)
+        )
+        ((assignment? exp)
+        (compile-assignment exp target linkage ct-env)
+        )
+        ((definition? exp)
+        (compile-definition exp target linkage ct-env)
+        )
+        ((if? exp)
+        (compile-if exp target linkage ct-env)
+        )
+        ((lambda? exp)
+        (compile-lambda exp target linkage ct-env)
+        )
+        ((begin? exp)
+        (compile-sequence (begin-actions exp) target linkage ct-env)
+        )
+        ((cond? exp)
+        (compile (cond->if exp) target linkage ct-env)
+        )
+        ((application? exp)
+         (compile-application exp target linkage ct-env)
+        )
+        (else 
+            (error "Unknown expression type -- COMPILE" exp)
+        )
+    )
+)
+
+#| Test expr |#
+
+(define (x a)
+    ((define (y z) 
+        (+ a z)
+    )
+    (y 2))
+)
+
+(define (compile-lambda exp target linkage ct-env)
+    (let ((proc-entry (make-label 'entry))
+        (after-lambda (make-label 'after-lambda))
+        )
+        (display "hello lambda")
+        (let ((lambda-linkage (if (eq? linkage 'next) after-lambda linkage))
+            (parameters (lambda-parameters exp))
+            )
+            (if (null? ct-env)
+                (set! ct-env (list parameters))
+                (let ((old-ct-env (cons (car ct-env) (cdr ct-env))))
+                    (set-car! ct-env parameters)
+                    (set-cdr! ct-env old-ct-env)
+                )
+
+            )
+
+            (append-instruction-sequences
+                (tack-on-instruction-sequence
+                (end-with-linkage lambda-linkage
+                    (make-instruction-sequence '(env) (list target)
+                    `((assign ,target 
+                                (op make-compiled-procedure)
+                                (label ,proc-entry)
+                                (reg env)
+                        )
+                    )
+                    )
+                )
+                (compile-lambda-body exp proc-entry ct-env)
+                )
+                after-lambda
+            )
+        )
+    ) 
+)
+
+
+(define (compile-lambda-body exp proc-entry ct-env)
+    (let ((formals (lambda-parameters exp)))
+        (append-instruction-sequences
+            (make-instruction-sequence
+            '(env proc argl)
+            '(env)
+            `(,proc-entry
+                (assign env (op compiled-procedure-env) (reg proc))
+                (assign env
+                        (op extend-environment)
+                        (const ,formals)
+                        (reg argl)
+                        (reg env)
+                )
+            )
+            ) 
+            (compile-sequence (lambda-body exp) 'val 'return ct-env)
+        )
+    )
+)
+
+(define (compile-definition exp target linkage ct-val)
+    (let ((var (definition-variable exp))
+        (get-value-code 
+                (compile (definition-value exp) 'val 'next ct-val)
+        )
+        )
+        (end-with-linkage linkage
+            (preserving '(env)
+                        get-value-code
+                        (make-instruction-sequence 
+                            '(env val)
+                            (list target)
+                            `((perform (op define-variable!)
+                                        (const ,var)
+                                        (reg val)
+                                        (reg env)
+                                )
+                                (assign ,target (const ok))
+                            )
+                        
+                        )
+            )
+        )
+    )
+)
