@@ -1978,3 +1978,101 @@ Expr to compile
         )
     )
 )
+
+#| Exercise 5.44 |#
+
+(define (mul-generator exp target linkage ct-env)
+    (let ((prc (find-variable '+ ct-env)))
+        (if (eq? prc 'not-found)
+            (end-with-linkage linkage
+                (append-instruction-sequences
+                    (spread-arguments-mul (operands exp))
+                    (make-instruction-sequence
+                        (list '
+                        'argl)
+                        (list target)
+                        `((assign ,target (op *) (reg 
+                    ) (reg argl)))
+                    )
+                )
+            )
+            (end-with-linkage linkage
+                (append-instruction-sequences
+                    (spread-arguments-mul (operands exp))
+                    (make-instruction-sequence
+                        (list '
+                        'argl)
+                        (list target proc)
+                        `((assign ,target (op *) (reg 
+                    ) (reg argl)))
+                    )
+                )
+            )
+        )
+    )
+
+)
+
+(define (plus-generator exp target linkage ct-env)
+    (end-with-linkage linkage
+        (append-instruction-sequences
+            (spread-arguments-plus (operands exp))
+            (make-instruction-sequence
+                (list '
+                'argl)
+                (list target)
+                `((assign ,target (op +) (reg 
+            ) (reg argl)))
+            )
+        )
+    )
+)
+
+(define (compile exp target linkage)
+    (cond ((self-evaluating? exp)
+        (compile-self-evaluating exp target linkage)
+        )
+        ((quoted? exp)
+        (compile-quoted exp target linkage)
+        )
+        ((variable? exp)
+        (compile-variable exp target linkage ct-env)
+        )
+        ((is-plus? exp)
+        (plus-generator exp target linkage ct-env)
+        )
+        ((is-equal? exp)
+        (equal-generator exp target linkage)
+        )
+        ((is-minus? exp)
+        (minus-generator exp target linkage)
+        )
+        ((is-mul? exp)
+        (mul-generator exp target linkage ct-env)
+        )
+        ((assignment? exp)
+        (compile-assignment exp target linkage ct-env)
+        )
+        ((definition? exp)
+        (compile-definition exp target linkage ct-env)
+        )
+        ((if? exp)
+        (compile-if exp target linkage ct-env)
+        )
+        ((lambda? exp)
+        (compile-lambda exp target linkage ct-env)
+        )
+        ((begin? exp)
+        (compile-sequence (begin-actions exp) target linkage ct-env)
+        )
+        ((cond? exp)
+        (compile (cond->if exp) target linkage ct-env)
+        )
+        ((application? exp)
+        (compile-application exp target linkage ct-env)
+        )
+        (else 
+            (error "Unknown expression type -- COMPILE" exp)
+        )
+    )
+)
