@@ -1478,13 +1478,16 @@ saves and restores.
         (iter frame 0)
     )
     (define (scan curr-env counter)
-        (let ((scan-res (scan-frame (car curr-env))))
-            (cond ((null? curr-env)
-                (error "Variable not found in env" var))
-                (scan-res (cons counter scan-res))
-                (else (scan (cdr curr-env) (+ counter 1)))
+        (if (null? curr-env)
+            (error "Variable not found in env" var)
+            (let ((scan-res (scan-frame (car curr-env))))
+                (cond 
+                    (scan-res (cons counter scan-res))
+                    (else (scan (cdr curr-env) (+ counter 1)))
+                )
             )
         )
+
     )
     (scan ct-env 0)
 )
@@ -1592,3 +1595,4 @@ saves and restores.
         )
     )
 )
+
