@@ -1596,3 +1596,34 @@ saves and restores.
     )
 )
 
+#| Exercice 5.41 |#
+
+(define (find-variable var ct-env)
+    (define (scan-frame frame)
+        (define (iter curr-frame counter)
+            (cond ((null? curr-frame)
+                #f)
+                ((eq? (car curr-frame) var) counter)
+                (else (iter (cdr curr-frame) (+ 1 counter)))
+
+            )
+        )
+        (iter frame 0)
+    )
+    (define (scan curr-env counter)
+        (if (null? curr-env)
+            (begin 
+                (display "not found")
+                (newline)
+            )
+            (let ((scan-res (scan-frame (car curr-env))))
+                (cond 
+                    (scan-res (cons counter scan-res))
+                    (else (scan (cdr curr-env) (+ counter 1)))
+                )
+            )
+        )
+
+    )
+    (scan ct-env 0)
+)
