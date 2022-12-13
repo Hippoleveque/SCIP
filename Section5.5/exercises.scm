@@ -1042,7 +1042,7 @@ This choice is being made in construct-arglist and code-to-get-rest-args
             code-for-next-arg
             (preserving '(env)
                         code-for-next-arg
-                        (code-to-get-rest-args (cdr operands-codes))
+                        (code-to-get-rest-args (cdr operand-codes))
             )
         )
     )
@@ -1513,7 +1513,7 @@ saves and restores.
 (define (compile-assignment exp target linkage ct-env)
     (let ((var (assignment-variable exp))
         (get-value-code 
-                (compile (assignment-value exp) 'val 'next)
+                (compile (assignment-value exp) 'val 'next ct-env)
         )
         )
         (let ((address (lookup-compile-env exp ct-env)))
@@ -1544,7 +1544,7 @@ saves and restores.
         )
         (let ((lambda-linkage (if (eq? linkage 'next) after-lambda linkage))
               (parameters (lambda-parameters exp))
-              (old-ct-env (cons (car ct-env) (cdr ct-env)))
+              (old-ct-env (if (null? ct-env) '() (cons (car ct-env) (cdr ct-env))))
             )
             (set-car! ct-env parameters)
             (set-cdr! ct-env old-ct-env)
@@ -1560,7 +1560,7 @@ saves and restores.
                     )
                     )
                 )
-                (compile-lambda-body exp proc-entry)
+                (compile-lambda-body exp proc-entry ct-env)
                 )
                 after-lambda
             )
@@ -1568,9 +1568,30 @@ saves and restores.
     ) 
 )
 
+(define (compile-lambda-body exp proc-entry ct-env)
+    (let ((formals (lambda-parameters exp)))
+        (append-instruction-sequences
+            (make-instruction-sequence
+            '(env proc argl)
+            '(env)
+            `(,proc-entry
+                (assign env (op compiled-procedure-env) (reg proc))
+                (assign env
+                        (op extend-environment)
+                        (const ,formals)
+                        (reg argl)
+                        (reg env)
+                )
+            )
+            ) 
+            (compile-sequence (lambda-body exp) 'val 'return ct-env)
+        )
+    )
+)
+
 (define (compile-sequence seq target linkage ct-env)
     (if (last-exp? seq)
-        (compile (first-exp seq) target linkage)
+        (compile (first-exp seq) target linkage ct-env)
         (preserving 
             '(env continue)
             (compile (first-exp seq) target 'next ct-env)
@@ -1612,10 +1633,7 @@ saves and restores.
     )
     (define (scan curr-env counter)
         (if (null? curr-env)
-            (begin 
-                (display "not found")
-                (newline)
-            )
+            'not-found
             (let ((scan-res (scan-frame (car curr-env))))
                 (cond 
                     (scan-res (cons counter scan-res))
@@ -1627,3 +1645,131 @@ saves and restores.
     )
     (scan ct-env 0)
 )
+
+#| Exercice 5.42 |#
+
+
+(define (compile-variable exp target linkage ct-env)
+    (let ((address (find-variable exp ct-env)))
+        (if (eq? address 'not-found)
+            (end-with-linkage linkage
+                (make-instruction-sequence '(env)
+                                        (list target)
+                                        `((assign ,target
+                                            (op lookup-variable-value)
+                                            (const ,exp)
+                                            (reg env)
+                                            ))
+                ) 
+            )
+            (end-with-linkage linkage
+                (make-instruction-sequence '(env)
+                                            (list target)
+                                            `((assign ,target
+                                                (op lexical-address-lookup)
+                                                (const ,address)
+                                                (reg env)
+                                            ))
+                ) 
+            )
+        )
+
+    )
+)
+
+(define (compile-assignment exp target linkage ct-env)
+    (let ((var (assignment-variable exp))
+        (get-value-code 
+                (compile (assignment-value exp) 'val 'next ct-env)
+        )
+        )
+        (let ((address (find-variable var ct-env)))
+            (if (eq? address 'not-found)
+                (end-with-linkage linkage
+                    (preserving '(env)
+                                get-value-code
+                                (make-instruction-sequence 
+                                    '(env val)
+                                    (list target)
+                                    `((perform  (op set-variable-value!)
+                                                (const ,var)
+                                                (reg val)
+                                                (reg env)
+                                        )
+                                        (assign ,target (const ok))
+                                    )
+                                )
+                    )
+                )
+                (end-with-linkage linkage
+                    (preserving '(env)
+                                get-value-code
+                                (make-instruction-sequence 
+                                    '(env val)
+                                    (list target)
+                                    `((perform  (op lexical-address-set!)
+                                                (const ,address)
+                                                (reg val)
+                                                (reg env)
+                                        )
+                                        (assign ,target (const ok))
+                                    )
+                                )
+                    )
+                )
+            )
+
+        )
+
+    )
+)
+
+(define (compile-lambda exp target linkage ct-env)
+    (let ((proc-entry (make-label 'entry))
+        (after-lambda (make-label 'after-lambda))
+        )
+        (let ((lambda-linkage (if (eq? linkage 'next) after-lambda linkage))
+            (parameters (lambda-parameters exp))
+            )
+            (if (null? ct-env)
+                (set! ct-env (list parameters))
+                (let ((old-ct-env (cons (car ct-env) (cdr ct-env))))
+                    (set-car! ct-env parameters)
+                    (set-cdr! ct-env old-ct-env)
+                )
+
+            )
+            (append-instruction-sequences
+                (tack-on-instruction-sequence
+                (end-with-linkage lambda-linkage
+                    (make-instruction-sequence '(env) (list target)
+                    `((assign ,target 
+                                (op make-compiled-procedure)
+                                (label ,proc-entry)
+                                (reg env)
+                        )
+                    )
+                    )
+                )
+                (compile-lambda-body exp proc-entry ct-env)
+                )
+                after-lambda
+            )
+        )
+    ) 
+)
+
+
+#| 
+Expr to compile 
+|#
+
+((lambda (x y)
+    (lambda (a b c d)
+        ((lambda (y z) (* x y z))
+            (* a b x)
+            (+ c d x)
+        )
+    )
+) 3 4 )
+

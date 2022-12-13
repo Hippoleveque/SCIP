@@ -343,7 +343,7 @@
            code-for-next-arg
            (preserving '(env)
                        code-for-next-arg
-                       (code-to-get-rest-args (cdr operands-codes))
+                       (code-to-get-rest-args (cdr operands-code))
            )
        )
   )
