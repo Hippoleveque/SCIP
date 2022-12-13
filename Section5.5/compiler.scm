@@ -536,24 +536,24 @@
 
 
 (define (tack-on-instruction-sequence seq body-seq)
-(make-instruction-sequence
-  (registers-needed seq)
-  (registers-modified seq)
-  (append (statements seq) (statements body-seq))
-)
+  (make-instruction-sequence
+    (registers-needed seq)
+    (registers-modified seq)
+    (append (statements seq) (statements body-seq))
+  )
 )
 
 
 (define (parallel-instruction-sequences seq1 seq2)
-(make-instruction-sequence
-  (list-union (registers-needed seq1)
-              (registers-needed seq2)
+  (make-instruction-sequence
+    (list-union (registers-needed seq1)
+                (registers-needed seq2)
+    )
+    (list-union (registers-modified seq1)
+                (registers-modified seq2)
+    )
+    (append (statements seq1) (statements seq2))
   )
-  (list-union (registers-modified seq1)
-              (registers-modified seq2)
-  )
-  (append (statements seq1) (statements seq2))
-)
 )
 
 (define all-regs '(env proc val argl continue))
