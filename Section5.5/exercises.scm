@@ -1996,34 +1996,28 @@ Expr to compile
                     )
                 )
             )
-            (end-with-linkage linkage
-                (append-instruction-sequences
-                    (spread-arguments-mul (operands exp))
-                    (make-instruction-sequence
-                        (list '
-                        'argl)
-                        (list target proc)
-                        `((assign ,target (op *) (reg 
-                    ) (reg argl)))
-                    )
-                )
-            )
+            (compile-application exp target linkage ct-env)
         )
     )
 
 )
 
 (define (plus-generator exp target linkage ct-env)
-    (end-with-linkage linkage
-        (append-instruction-sequences
-            (spread-arguments-plus (operands exp))
-            (make-instruction-sequence
-                (list '
-                'argl)
-                (list target)
-                `((assign ,target (op +) (reg 
-            ) (reg argl)))
+    (let ((prc (find-variable '+ ct-env)))
+        (if (eq? prc 'not-found)
+            (end-with-linkage linkage
+                (append-instruction-sequences
+                    (spread-arguments-plus (operands exp))
+                    (make-instruction-sequence
+                        (list '
+                        'argl)
+                        (list target)
+                        `((assign ,target (op +) (reg 
+                    ) (reg argl)))
+                    )
+                )
             )
+            (compile-application exp target linkage ct-env)
         )
     )
 )
