@@ -343,7 +343,7 @@
            code-for-next-arg
            (preserving '(env)
                        code-for-next-arg
-                       (code-to-get-rest-args (cdr operands-code))
+                       (code-to-get-rest-args (cdr operand-codes))
            )
        )
   )
@@ -849,9 +849,14 @@
         (list 'prompt-for-input prompt-for-input)
         (list 'read read)
         (list 'get-global-environment get-global-environment)
+        (list 'make-compiled-procedure make-compiled-procedure )
         (list 'compiled-procedure? compiled-procedure?)
         (list 'compiled-procedure-entry compiled-procedure-entry)
         (list 'compiled-procedure-env compiled-procedure-env)
+        (list 'list list)
+        (list 'cons cons)
+        (list 'false? false?)
+        (list 'true? true?)
         (list '= =)
         (list '* *)
         (list '+ +)
@@ -896,7 +901,7 @@
 (define (compile-and-go expression)
   (let ((instructions 
           (assemble (statements
-            (compile expression 'val 'return')
+            (compile expression 'val 'return)
           ) eceval)
         ))
         (set! the-global-environment (setup-environment))
