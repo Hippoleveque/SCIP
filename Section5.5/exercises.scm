@@ -2070,3 +2070,261 @@ Expr to compile
         )
     )
 )
+
+#| Exercise 5.45 |#
+
+#| a. |#
+
+#| 
+New formula: 1 + 6 * n for pushes, (n - 2) * 3 + 5
+
+Vs special purpose machine when n is big 
+ratio is  3 for pushed and 3/2 for depth
+
+Vs interpreted version, 
+Ratio is 6/32 for pushed and 3/5 for depth
+
+|#
+
+#| b. |#
+
+
+#| 
+(assign val (op make-compiled-procedure) (label entry177) (reg env)) 
+(goto (label after-lambda176)) 
+entry177 
+    (assign env (op compiled-procedure-env) (reg proc)) 
+    (assign env (op extend-environment) (const (n)) (reg argl) (reg env)) 
+    (save continue) 
+    (save env) 
+    (assign proc (op lookup-variable-value) (const =) (reg env)) 
+    (assign val (const 1)) 
+    (assign argl (op list) (reg val)) 
+    (assign val (op lookup-variable-value) (const n) (reg env)) 
+    (assign argl (op cons) (reg val) (reg argl)) 
+    (test (op primitive-procedure?) (reg proc)) 
+    (branch (label primitive-branch192)) 
+
+compiled-branch191 
+    (assign continue (label after-call190)) 
+    (assign val (op compiled-procedure-entry) (reg proc)) 
+    (goto (reg val)) 
+    
+primitive-branch192 
+    (assign val (op apply-primitive-procedure) (reg proc) (reg argl)) 
+    
+after-call190 
+    (restore env) 
+    (restore continue) 
+    (test (op false?) (reg val)) 
+    (branch (label false-branch179)) 
+    
+true-branch180 (assign val (const 1)) 
+    (goto (reg continue)) 
+
+false-branch179 
+    (assign proc (op lookup-variable-value) (const *) (reg env)) 
+    (save continue) 
+    (save proc) 
+    (assign val (op lookup-variable-value) (const n) (reg env)) 
+    (assign argl (op list) (reg val)) 
+    (save argl) 
+    (assign proc (op lookup-variable-value) (const factorial) (reg env)) 
+    (save proc) 
+    (assign proc (op lookup-variable-value) (const -) (reg env)) 
+    (assign val (const 1)) 
+    (assign argl (op list) (reg val)) 
+    (assign val (op lookup-variable-value) (const n) (reg env)) 
+    (assign argl (op cons) (reg val) (reg argl)) 
+    (test (op primitive-procedure?) (reg proc)) 
+    (branch (label primitive-branch183)) 
+
+compiled-branch182 
+    (assign continue (label after-call181)) 
+    (assign val (op compiled-procedure-entry) (reg proc)) 
+    (goto (reg val)) 
+
+primitive-branch183 
+    (assign val (op apply-primitive-procedure) (reg proc) (reg argl)) 
+    
+after-call181 
+    (assign argl (op list) (reg val)) 
+    (restore proc) 
+    (test (op primitive-procedure?) (reg proc)) 
+    (branch (label primitive-branch186)) 
+
+compiled-branch185 
+    (assign continue (label after-call184)) 
+    (assign val (op compiled-procedure-entry) (reg proc)) 
+    (goto (reg val)) 
+    
+primitive-branch186 
+    (assign val (op apply-primitive-procedure) (reg proc) (reg argl)) 
+    
+after-call184 
+    (restore argl) 
+    (assign argl (op cons) (reg val) (reg argl)) 
+    (restore proc) 
+    (restore continue) 
+    (test (op primitive-procedure?) (reg proc)) 
+    (branch (label primitive-branch189)) 
+
+compiled-branch188 
+    (assign val (op compiled-procedure-entry) (reg proc)) 
+    (goto (reg val)) 
+
+primitive-branch189 
+    (assign val (op apply-primitive-procedure) (reg proc) (reg argl)) 
+    (goto (reg continue)) 
+
+after-call187 
+after-if178 
+after-lambda176 
+    (perform (op define-variable!) (const factorial) (reg val) (reg env)) 
+    (assign val (const ok)))
+
+
+|#
+
+#| Not really beyond implementing the dedicated generators
+for * and -. 
+
+|#
+
+#| Exercise 5.46 |#
+
+#| Special purpose fib machine |#
+
+(define fib-machine 
+    (make-machine
+        '(continue n val)
+        (list (list '- -)
+              (list '+ +)
+              (list '< <)
+        )
+        
+        '(    
+            (perform (op initialize-stack))
+            (assign continue (label fib-done))
+            fib-loop
+                (test (op <) (reg n) (const 2))
+                (branch (label base-case))
+                (save continue)
+                (save n)
+                (assign n (op -) (reg n) (const 1))
+                (assign continue (label after-first-fib))
+                (goto (label fib-loop))
+            
+            after-first-fib
+                (restore n)
+                (restore continue)
+                (assign n (op -) (reg n) (const 2))
+                (save continue)
+                (assign continue (label after-second-fib))
+                (save val)
+                (goto (label fib-loop))
+            
+            after-second-fib
+                (assign n (reg n))
+                (restore val)
+                (restore continue)
+                (assign val (op +) (reg n) (reg val))
+                (goto (reg continue))
+            
+            base-case
+                (assign val (reg n))
+                (goto (reg continue))
+                
+            fib-done
+                (perform (op print-stack-statistics))
+        )
+    )
+)
+
+#|  
+n | pushes | depth
+1 |    0   |   0
+2 |    4   |   2
+3 |    8   |   4
+4 |   16   |   6
+5 |   28   |   8
+6 |   48   |  10
+
+0 + 4 = 4 + 4 = 8
+4 + 8 + 4 = 16
+
+D'où S(n) = S(n - 1) + S(n - 2) + 4
+
+Fib(n) = Fib(n - 1) + Fib(n - 2)
+
+Let's assume S(n) = a * Fib(n + 1) + b
+
+S(n - 1) + S(n - 2) + 4 = a * Fib(n + 1) + b
+
+a * Fib(n) + a * Fib(n - 1) + 2b + 4 = a * Fib(n + 1)
+Fib(n + 1) = Fib(n) + Fib(n - 1)
+a * Fib(n) + a * Fib(n - 1) + b + 4 = a * Fib(n) + a * Fib(n -1)
+b + 4 = 0 => b = - 4
+
+S(3) = 8 = a * Fib(4) - 4
+         = a * 3 - 4
+       a = 4/3  
+
+S (n) = 4 / 3 * Fib(n + 1) - 4
+|#
+
+#| Compile and go |#
+
+#| 
+n | pushes | depth
+1 |    7   |   3
+2 |    17  |   5
+3 |    27  |   8
+4 |    47  |   11
+5 |    77  |   14
+6 |   127  |   17
+
+7 + 17 + 3 = 27
+17 + 27 + 3 = 47
+
+S(n) = S(n - 1) + S(n - 2) + 3
+
+Fib(n) = Fib(n - 1) + Fib(n - 2)
+
+Let's assume S(n) = a * Fib(n + 1) + b
+
+S(n - 1) + S(n - 2) + 4 = a * Fib(n + 1) + b
+
+a * Fib(n) + a * Fib(n - 1) + 2b + 3 = a * Fib(n + 1) + b
+Fib(n + 1) = Fib(n) + Fib(n - 1)
+a * Fib(n) + a * Fib(n - 1) + b + 3 = a * Fib(n) + a * Fib(n -1)
+b + 3 = 0 => b = - 3
+
+S(3) = 27 = a * Fib(4) - 3
+          = a * 3 - 3
+       a  = 24 / 3 = 8
+
+
+S (n) = 8 * Fib(n + 1) - 3
+|#
+
+#| Interpreted |#
+
+#| 
+n | pushes | depth
+1 |    16  |   8
+2 |    72  |   13
+3 |    128 |   18
+4 |    240 |   23
+5 |    408 |   28
+6 |    688 |   33
+
+S(n) = 56 * Fib(n + 1) - 40
+|#
+
+
+#| 
+Specialized / compiled = 4/3 / 8 = 1 / 6 
+Compiled / interpreted = 8 / 56 = 1 / 7
+
+|#

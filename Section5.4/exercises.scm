@@ -537,7 +537,7 @@ Let's assume S(n) = a * Fib(n + 1) + b
 
 S(n - 1) + S(n - 2) + 40 = a * Fib(n + 1) + b
 
-a * Fib(n) + a * Fib(n - 1) + 2b + 40 = a * Fib(n + 1)
+a * Fib(n) + a * Fib(n - 1) + 2b + 40 = a * Fib(n + 1) + b
 Fib(n + 1) = Fib(n) + Fib(n - 1)
 a * Fib(n) + a * Fib(n - 1) + b + 40 = a * Fib(n) + a * Fib(n -1)
 b + 40 = 0 => b = - 40
