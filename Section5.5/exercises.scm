@@ -3008,3 +3008,57 @@ Compiled / interpreted = 8 / 56 = 1 / 7
         (* (factorial (- n 1)) n)
     )
 )
+
+#| Exercise 5.49 |#
+
+(define eceval
+    (make-machine
+        '(exp env val proc argl continue unev)
+        eceval-operations
+        '(
+        (branch (label external-entry))
+        read-compile-execute-print-loop
+            (perform (op initialize-stack))
+            (perform 
+                (op prompt-for-input)
+                (const "::: EC-Eval input: ")
+            )
+            (assign exp (op read))
+            (assign env (op get-global-environment))
+            (assign continue (label print-result))
+            (goto (label compile-exp))
+        
+        external-entry
+            (perform (op initialize-stack))
+            (assign env (op get-global-environment))
+            (assign continue (label print-result))
+            (goto (reg val))
+
+        compile-exp
+            (assign val (op compile-and-run) (reg exp))
+            (goto (reg val))
+
+        print-result
+            (perform (op print-stack-statistics))
+            (perform
+                (op announce-output)
+                (const "::: EC-Eval value:")
+            )
+            (perform (op user-print) (reg val))
+            (goto (label read-compile-execute-print-loop))
+
+        unknown-expression-type
+            (assign val (const unknown-expression-type-error))
+            (goto (label signal-error))
+
+        unknown-procedure-type
+            (restore continue)
+            (assign val (const unknown-procedure-type-error))
+            (goto (label signal-error))
+
+        signal-error
+            (perform (op user-print) (reg val))
+            (goto (label read-compile-execute-print-loop))
+        )
+    )
+)
